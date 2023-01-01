@@ -1,0 +1,24 @@
+app_name = 'app1'
+server_name = 'server1'
+
+included_paths = ['/Users/ondrej/Documents/GitHub/bkp/bkp/testdata/app1']
+# excluded_files = '/home/app1/logs'
+
+
+
+pre_backup_script = ''
+post_backup_script = ''
+
+pre_restore_script = ''
+post_restore_script = ''
+
+incremental_backup_interval_days = 1
+full_backup_periods = [7, 30, 180]
+backup_start_time = '04:10'
+
+# [local]
+local_storage_location = '/Users/ondrej/Documents/GitHub/bkp/bkp/testdata/storage'
+
+# [remote]
+remote_storage_address = 'user@server'
+remote_location = '/home/backup'

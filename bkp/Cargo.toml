@@ -9,3 +9,9 @@ edition = "2021"
 clap = { version = "4.0", features = ["derive"] }
 serde = { version = "1.0", features = ["derive"] }
 toml = "0.5.10"
+tar = "0.4"
+chrono = "0.4.23"
+rust-s3 = { version = "0.32", features = ["default", "with-tokio"] }
+# aws-creds = { version = "0.34.0", default-features = true }
+# aws-region = "0.25.1"
+tokio = { version = "1", features = ["rt", "rt-multi-thread", "macros", "fs"] }

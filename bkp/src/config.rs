@@ -1,32 +1,42 @@
+use std::path::PathBuf;
+
 use serde::Deserialize;
 
-#[derive(Deserialize)]
-struct Config {
-    ip: String,
-    port: Option<u16>,
-    keys: Keys,
+use crate::fs::{list_files_in_dir, read_file_to_string};
+
+#[derive(Deserialize, Debug)]
+pub struct Config {
+    pub app_name: String,
+    pub server_name: String,
+
+    pub included_paths: Vec<String>,
+    // excluded_files: Vec<String>,
+    pub pre_backup_script: String,
+    pub post_backup_script: String,
+    pub pre_restore_script: String,
+    pub post_restore_script: String,
+
+    pub incremental_backup_interval_days: i32,
+    pub full_backup_periods: Vec<i32>,
+    pub backup_start_time: String,
+
+    pub local_storage_location: String,
+    pub remote_storage_address: String,
+    pub remote_location: String,
 }
 
-#[derive(Deserialize)]
-struct Keys {
-    github: String,
-    travis: Option<String>,
-}
+pub fn parse_configs(path: PathBuf) -> Vec<Config> {
+    let config_files = list_files_in_dir(path);
 
-pub fn parse_config() {
-    let config: Config = toml::from_str(
-        r#"
-                    ip = '127.0.0.1'
+    let mut configs: Vec<Config> = Vec::new();
 
-                    [keys]
-                    github = 'xxxxxxxxxxxxxxxxx'
-                    travis = 'yyyyyyyyyyyyyyyyy'
-                "#,
-    )
-    .unwrap();
+    for config_file in config_files.unwrap() {
+        let config = read_file_to_string(config_file.as_path());
+        match toml::from_str(config.as_str()) {
+            Ok(config) => configs.push(config),
+            Err(e) => println!("Error parsing config file: {}", e),
+        }
+    }
 
-    assert_eq!(config.ip, "127.0.0.1");
-    assert_eq!(config.port, None);
-    assert_eq!(config.keys.github, "xxxxxxxxxxxxxxxxx");
-    assert_eq!(config.keys.travis.as_ref().unwrap(), "yyyyyyyyyyyyyyyyy");
+    configs
 }
