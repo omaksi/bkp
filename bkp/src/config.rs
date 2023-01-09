@@ -7,6 +7,8 @@ use crate::storage::fs::{list_files_in_dir, read_file_to_string};
 #[derive(Deserialize, Debug)]
 pub struct Config {
     pub app_name: String,
+
+    pub app_root: String,
     // pub server_name: String,
     pub included_paths: Vec<String>,
     pub excluded_paths: Vec<String>,
@@ -24,7 +26,9 @@ pub struct Config {
     // pub remote_location: String,
 }
 
-pub fn parse_configs(path: PathBuf) -> Vec<Config> {
+const CONFIG_FILES_LOCATION: &str = "../testdata/config";
+
+fn parse_configs(path: PathBuf) -> Vec<Config> {
     let config_files = list_files_in_dir(path);
 
     let mut configs: Vec<Config> = Vec::new();
@@ -38,4 +42,20 @@ pub fn parse_configs(path: PathBuf) -> Vec<Config> {
     }
 
     configs
+}
+
+pub fn get_all_configs() -> Vec<Config> {
+    parse_configs(PathBuf::from(CONFIG_FILES_LOCATION))
+}
+
+pub fn get_config_from_app_name(app_name: &String) -> Config {
+    let configs = parse_configs(PathBuf::from(CONFIG_FILES_LOCATION));
+
+    for config in configs {
+        if config.app_name == *app_name {
+            return config;
+        }
+    }
+
+    panic!("No config found for app_name: {}", app_name);
 }

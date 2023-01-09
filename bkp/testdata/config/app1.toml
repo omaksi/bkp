@@ -1,13 +1,12 @@
 app_name = 'app1'
-server_name = 'server1'
+# server_name = 'server1'
+app_root = '/Users/ondrej/Documents/GitHub/bkp/bkp/testdata/app1/'
 
-included_paths = ['/Users/ondrej/Documents/GitHub/bkp/bkp/testdata/app1']
-excluded_paths = ['/Users/ondrej/Documents/GitHub/bkp/bkp/testdata/app1/logs.txt']
+included_paths = ['**/*']
+excluded_paths = ['logs.txt']
 
-
-
-pre_backup_script = ''
-post_backup_script = ''
+pre_backup_script = '/Users/ondrej/Documents/GitHub/bkp/bkp/testdata/scripts/app1/pre_backup.sh'
+post_backup_script = '/Users/ondrej/Documents/GitHub/bkp/bkp/testdata/scripts/app1/post_backup.sh'
 
 pre_restore_script = ''
 post_restore_script = ''

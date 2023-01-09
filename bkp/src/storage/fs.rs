@@ -33,16 +33,19 @@ fn list_files_rec(dir: PathBuf, mut paths: &mut Vec<PathBuf>) -> Result<(), Erro
     Ok(())
 }
 
-pub fn get_list_of_paths(included_paths: Vec<String>, excluded_paths: Vec<String>) -> Vec<PathBuf> {
+pub fn get_files_to_backup(
+    app_root: String,
+    included_paths: Vec<String>,
+    excluded_paths: Vec<String>,
+) -> Vec<PathBuf> {
     let mut included_pathbufs: Vec<PathBuf> = Vec::new();
     let mut excluded_pathbufs: Vec<PathBuf> = Vec::new();
 
     // get included_pathbufs using glob
     for path in included_paths {
-        let pathbufs = glob(path.as_str()).unwrap();
-        println!("pathbufs: {:?}", pathbufs);
-        for pathbuf in pathbufs {
-            included_pathbufs.push(pathbuf.unwrap());
+        let full_path = app_root.clone() + &path;
+        for entry in glob(&full_path).unwrap() {
+            included_pathbufs.push(entry.unwrap());
         }
     }
 
@@ -50,9 +53,9 @@ pub fn get_list_of_paths(included_paths: Vec<String>, excluded_paths: Vec<String
 
     // get excluded_pathbufs using glob
     for path in excluded_paths {
-        let pathbufs = glob(path.as_str()).unwrap();
-        for pathbuf in pathbufs {
-            excluded_pathbufs.push(pathbuf.unwrap());
+        let full_path = app_root.clone() + &path;
+        for entry in glob(&full_path).unwrap() {
+            excluded_pathbufs.push(entry.unwrap());
         }
     }
 
@@ -79,26 +82,6 @@ pub fn filter_files_newer_than(
 
         if last_modified > time {
             filtered_paths.push(path.clone());
-        }
-    }
-
-    Ok(filtered_paths)
-}
-
-pub fn filter_files_with_extension(
-    paths: Vec<PathBuf>,
-    extension: &str,
-) -> Result<Vec<PathBuf>, Error> {
-    let mut filtered_paths: Vec<PathBuf> = Vec::new();
-
-    for path in paths {
-        match path.extension() {
-            Some(path_extension) => {
-                if path_extension == extension {
-                    filtered_paths.push(path.clone());
-                }
-            }
-            None => continue,
         }
     }
 

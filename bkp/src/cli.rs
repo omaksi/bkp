@@ -1,6 +1,8 @@
 use clap::{Args, Parser, Subcommand};
 
-use crate::actions::backup::automatic_backup;
+use crate::actions::{full_backup, incremental_backup, list, restore};
+
+// use crate::actions::{full_backup_action, incremental_backup_action, list, restore};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -16,6 +18,9 @@ enum Commands {
     Restore {
         app_name: String,
         backup_name: String,
+    },
+    List {
+        app_name: Option<String>,
     },
 }
 
@@ -40,16 +45,20 @@ pub fn parse_args() -> () {
     match &args.command {
         Some(Commands::Backup(backup)) => {
             println!("Automatic backup command");
-            automatic_backup();
+            // automatic_backup();
 
             match &backup.command {
                 Some(BackupTypes::Full { app_name }) => {
                     println!("Full command");
                     println!("{:?}", app_name);
+
+                    full_backup(app_name);
                 }
                 Some(BackupTypes::Incremental { app_name }) => {
                     println!("Incremental command");
                     println!("{:?}", app_name);
+
+                    incremental_backup(app_name);
                 }
                 None => {
                     println!("No backup type");
@@ -63,6 +72,14 @@ pub fn parse_args() -> () {
             println!("Restore command");
             println!("{:?}", app_name);
             println!("{:?}", backup_name);
+
+            restore(app_name.clone(), backup_name.clone());
+        }
+        Some(Commands::List { app_name }) => {
+            println!("List command");
+            println!("{:?}", app_name);
+
+            list(app_name);
         }
         None => {
             println!("No command");
