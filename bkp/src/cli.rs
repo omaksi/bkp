@@ -40,28 +40,26 @@ enum BackupTypes {
 pub fn parse_args() -> () {
     let args = Cli::parse();
 
-    println!("{:?}", args);
+    // println!("{:?}", args);
 
     match &args.command {
         Some(Commands::Backup(backup)) => {
-            println!("Automatic backup command");
+            // println!("Automatic backup command");
             // automatic_backup();
 
             match &backup.command {
                 Some(BackupTypes::Full { app_name }) => {
-                    println!("Full command");
-                    println!("{:?}", app_name);
+                    println!("Running full backup of {}", app_name);
 
                     full_backup(app_name);
                 }
                 Some(BackupTypes::Incremental { app_name }) => {
-                    println!("Incremental command");
-                    println!("{:?}", app_name);
+                    println!("Running incremental backup of {}", app_name);
 
                     incremental_backup(app_name);
                 }
                 None => {
-                    println!("No backup type");
+                    println!("Please specify backup type");
                 }
             }
         }
@@ -69,20 +67,15 @@ pub fn parse_args() -> () {
             app_name,
             backup_name,
         }) => {
-            println!("Restore command");
-            println!("{:?}", app_name);
-            println!("{:?}", backup_name);
+            println!("Running restore of {} from {}", app_name, backup_name);
 
             restore(app_name.clone(), backup_name.clone());
         }
         Some(Commands::List { app_name }) => {
-            println!("List command");
-            println!("{:?}", app_name);
-
             list(app_name);
         }
         None => {
-            println!("No command");
+            // println!("No command");
         }
     }
 }

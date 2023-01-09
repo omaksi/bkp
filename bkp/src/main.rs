@@ -10,7 +10,7 @@ mod time;
 use crate::cli::parse_args;
 
 fn main() {
-    println!("Hello, world!");
+    println!("Welcome to bkp");
 
     parse_args();
 }

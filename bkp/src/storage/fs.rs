@@ -49,7 +49,7 @@ pub fn get_files_to_backup(
         }
     }
 
-    println!("included_pathbufs: {:?}", included_pathbufs);
+    // println!("included_pathbufs: {:?}", included_pathbufs);
 
     // get excluded_pathbufs using glob
     for path in excluded_paths {
@@ -59,7 +59,7 @@ pub fn get_files_to_backup(
         }
     }
 
-    println!("excluded_pathbufs: {:?}", excluded_pathbufs);
+    // println!("excluded_pathbufs: {:?}", excluded_pathbufs);
 
     // remove excluded_pathbufs from included_pathbufs
     for excluded_pathbuf in excluded_pathbufs {

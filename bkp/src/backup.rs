@@ -54,7 +54,7 @@ pub fn get_all_backups_for_app(config: &Config) -> Vec<Backup> {
         .filter(|b| b.app_name == config.app_name)
         .collect();
 
-    println!("Found {} backups", backups.len());
+    // println!("Found {} backups", backups.len());
 
     backups.sort_by_key(|b| b.time);
 
@@ -108,7 +108,7 @@ fn do_backup(config: &Config, paths: &Vec<PathBuf>, backup_type: &str) {
     std::env::set_current_dir(config.app_root.clone()).unwrap();
 
     println!("Found {} files", paths.len());
-    println!("{:?}", paths);
+    // println!("{:?}", paths);
 
     // create path for new backup file, it should be config.local_storage_location + app_name + timestamp + .tar
     let backup_file_path = PathBuf::from(config.local_storage_location.clone())
