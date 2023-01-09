@@ -15,3 +15,4 @@ rust-s3 = { version = "0.32", features = ["default", "with-tokio"] }
 # aws-creds = { version = "0.34.0", default-features = true }
 # aws-region = "0.25.1"
 tokio = { version = "1", features = ["rt", "rt-multi-thread", "macros", "fs"] }
+glob = "0.3.1"

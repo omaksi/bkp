@@ -1,5 +1,7 @@
 use clap::{Args, Parser, Subcommand};
 
+use crate::actions::backup::automatic_backup;
+
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Cli {
@@ -11,7 +13,10 @@ struct Cli {
 enum Commands {
     /// Backs apps up according config file
     Backup(Backup),
-    // Stash(Stash),
+    Restore {
+        app_name: String,
+        backup_name: String,
+    },
 }
 
 #[derive(Debug, Args)]
@@ -34,7 +39,9 @@ pub fn parse_args() -> () {
 
     match &args.command {
         Some(Commands::Backup(backup)) => {
-            println!("Backup command");
+            println!("Automatic backup command");
+            automatic_backup();
+
             match &backup.command {
                 Some(BackupTypes::Full { app_name }) => {
                     println!("Full command");
@@ -48,6 +55,14 @@ pub fn parse_args() -> () {
                     println!("No backup type");
                 }
             }
+        }
+        Some(Commands::Restore {
+            app_name,
+            backup_name,
+        }) => {
+            println!("Restore command");
+            println!("{:?}", app_name);
+            println!("{:?}", backup_name);
         }
         None => {
             println!("No command");

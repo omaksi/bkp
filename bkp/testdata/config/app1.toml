@@ -2,7 +2,7 @@ app_name = 'app1'
 server_name = 'server1'
 
 included_paths = ['/Users/ondrej/Documents/GitHub/bkp/bkp/testdata/app1']
-# excluded_files = '/home/app1/logs'
+excluded_paths = ['/Users/ondrej/Documents/GitHub/bkp/bkp/testdata/app1/logs.txt']
 
 
 

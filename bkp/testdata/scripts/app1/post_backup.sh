@@ -1,0 +1,1 @@
+echo "Hello from app1 post_backup.sh"
