@@ -1,4 +1,9 @@
 pub fn run_script(script: &str) -> () {
+    if script == "" {
+        println!("No script to run");
+        return;
+    }
+
     let output = std::process::Command::new("sh")
         .arg("-c")
         .arg(script)

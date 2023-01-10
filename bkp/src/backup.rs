@@ -5,7 +5,11 @@ use chrono::{DateTime, Utc};
 use crate::{
     compress::compress_files,
     config::Config,
-    storage::fs::{filter_files_newer_than, get_files_to_backup, list_files_in_dir},
+    globalconfig::get_global_config,
+    storage::{
+        fs::{delete_file, filter_files_newer_than, get_files_to_backup, list_files_in_dir},
+        s3::{delete_backup_from_remote, get_all_remote_backups, upload_backup_to_remote},
+    },
     time::parse_timestamp,
 };
 
@@ -23,7 +27,7 @@ fn parse_backup_from_path(path: &PathBuf) -> Backup {
     let parts = file_name.split("_").collect::<Vec<&str>>();
     let app_name = parts[0].to_string();
     let backup_type = parts[1].to_string();
-    let time = parse_timestamp(parts[2].to_string() + "Z").unwrap();
+    let time = parse_timestamp(parts[2].to_string()).unwrap();
 
     Backup {
         path: path.clone(),
@@ -41,22 +45,28 @@ fn parse_backups_from_paths(paths: Vec<PathBuf>) -> Vec<Backup> {
         .collect::<Vec<Backup>>()
 }
 
-pub fn get_all_backups_for_app(config: &Config) -> Vec<Backup> {
-    // let config = get_config_from_app_name(app_name);
+pub fn get_all_local_backups() -> Vec<Backup> {
+    let global_config = get_global_config();
 
-    let files = list_files_in_dir(config.local_storage_location.clone().into()).unwrap();
+    let files = list_files_in_dir(global_config.local_storage_location.clone().into()).unwrap();
 
-    let backups = parse_backups_from_paths(files);
+    let mut backups = parse_backups_from_paths(files);
+
+    backups.sort_by_key(|b| b.time);
+
+    backups
+}
+
+pub fn get_all_local_backups_for_app(config: &Config) -> Vec<Backup> {
+    let backups = get_all_local_backups();
 
     // filter files beginning with app_name
-    let mut backups: Vec<Backup> = backups
+    let backups: Vec<Backup> = backups
         .into_iter()
         .filter(|b| b.app_name == config.app_name)
         .collect();
 
     // println!("Found {} backups", backups.len());
-
-    backups.sort_by_key(|b| b.time);
 
     backups
 }
@@ -69,6 +79,9 @@ pub fn do_full_backup(config: &Config) {
     );
 
     do_backup(config, &paths, "full");
+
+    prune_local_backups(config);
+    prune_remote_backups(config);
 }
 
 pub fn do_incremental_backup(config: &Config, last_backup_time: DateTime<Utc>) {
@@ -110,10 +123,16 @@ fn do_backup(config: &Config, paths: &Vec<PathBuf>, backup_type: &str) {
     println!("Found {} files", paths.len());
     // println!("{:?}", paths);
 
+    let backup_file_name = config.app_name.clone()
+        + "_"
+        + backup_type
+        + "_"
+        + Utc::now().to_rfc3339().as_str()
+        + ".tar";
+
     // create path for new backup file, it should be config.local_storage_location + app_name + timestamp + .tar
-    let backup_file_path = PathBuf::from(config.local_storage_location.clone())
-        .join(config.app_name.clone() + "_" + backup_type + "_" + Utc::now().to_rfc3339().as_str())
-        .with_extension("tar");
+    let backup_file_path = PathBuf::from(get_global_config().local_storage_location.clone())
+        .join(backup_file_name.as_str());
 
     println!("Backup file path: {:?}", backup_file_path);
 
@@ -130,14 +149,17 @@ fn do_backup(config: &Config, paths: &Vec<PathBuf>, backup_type: &str) {
     println!("Compressing {} files", paths.len());
 
     // call compress function with backup_file_path and paths
-    compress_files(backup_file_path, &paths);
+    compress_files(backup_file_path.clone(), &paths);
+
+    // upload file to s3
+    upload_backup_to_remote(backup_file_path, backup_file_name);
 
     // restore current dir
     std::env::set_current_dir(current_dir).unwrap();
 }
 
 pub fn get_last_full_backup_time(config: &Config) -> DateTime<Utc> {
-    let backups = get_all_backups_for_app(config);
+    let backups = get_all_local_backups_for_app(config);
 
     let last_full_backup = backups
         .into_iter()
@@ -146,6 +168,40 @@ pub fn get_last_full_backup_time(config: &Config) -> DateTime<Utc> {
         .unwrap();
 
     last_full_backup.time
+}
+
+fn prune_local_backups(config: &Config) {
+    let backups = get_all_local_backups_for_app(config);
+
+    let mut backups_to_keep = config.keep_full_local_backups;
+
+    for backup in backups {
+        if backup.backup_type == "full" {
+            if backups_to_keep > 0 {
+                backups_to_keep -= 1;
+            } else {
+                println!("Deleting backup: {:?}", backup);
+                delete_file(&backup.path);
+            }
+        }
+    }
+}
+
+fn prune_remote_backups(config: &Config) {
+    let backups = get_all_remote_backups();
+
+    let mut backups_to_keep = config.keep_full_remote_backups;
+
+    for backup in backups {
+        if backup.backup_type == "full" {
+            if backups_to_keep > 0 {
+                backups_to_keep -= 1;
+            } else {
+                println!("Deleting backup: {:?}", backup);
+                delete_backup_from_remote(backup);
+            }
+        }
+    }
 }
 
 // pub fn automatic_backup() {

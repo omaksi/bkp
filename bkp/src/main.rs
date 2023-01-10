@@ -3,6 +3,7 @@ mod backup;
 mod cli;
 mod compress;
 mod config;
+mod globalconfig;
 mod scripts;
 mod storage;
 mod time;

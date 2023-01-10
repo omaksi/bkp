@@ -1,44 +1,86 @@
-// use s3::creds::Credentials;
-// use s3::error::S3Error;
-// use s3::region::Region;
-// use s3::Bucket;
+use std::path::PathBuf;
 
-// #[tokio::main]
-// async fn main() -> Result<(), S3Error> {
-//     // This requires a running minio server at localhost:9000
-//     let bucket = Bucket::new(
-//         "test-rust-s3",
-//         Region::Custom {
-//             region: "eu-central-1".to_owned(),
-//             endpoint: "http://localhost:9000".to_owned(),
-//         },
-//         Credentials::default()?,
-//     )?
-//     .with_path_style();
+use s3::creds::Credentials;
+use s3::region::Region;
+use s3::Bucket;
 
-//     let s3_path = "test.file";
-//     let test = b"I'm going to S3!";
+use crate::backup::Backup;
+use crate::time::parse_timestamp;
 
-//     let response_data = bucket.put_object(s3_path, test).await?;
-//     assert_eq!(response_data.status_code(), 200);
+fn create_bucket() -> Bucket {
+    Bucket::new(
+        "bkp",
+        Region::Custom {
+            region: "eu-central-1".to_owned(),
+            endpoint: "http://localhost:9000".to_owned(),
+        },
+        Credentials::new(Some("minioadmin"), Some("minioadmin"), None, None, None).unwrap(),
+    )
+    .unwrap()
+    .with_path_style()
+}
 
-//     let response_data = bucket.get_object(s3_path).await?;
-//     assert_eq!(response_data.status_code(), 200);
-//     assert_eq!(test, response_data.bytes());
+pub fn get_all_remote_backups() -> Vec<Backup> {
+    let bucket = create_bucket();
 
-//     let response_data = bucket
-//         .get_object_range(s3_path, 100, Some(1000))
-//         .await
-//         .unwrap();
-//     assert_eq!(response_data.status_code(), 206);
-//     let (head_object_result, code) = bucket.head_object(s3_path).await?;
-//     assert_eq!(code, 200);
-//     assert_eq!(
-//         head_object_result.content_type.unwrap_or_default(),
-//         "application/octet-stream".to_owned()
-//     );
+    let list_response = bucket.list("/".to_string(), Some("/".to_string())).unwrap();
 
-//     let response_data = bucket.delete_object(s3_path).await?;
-//     assert_eq!(response_data.status_code(), 204);
-//     Ok(())
+    // println!("s3 list response: {:?}", list_response[0].contents);
+    let mut backups: Vec<Backup> = list_response[0]
+        .contents
+        .clone()
+        .into_iter()
+        .map(|s3object| parse_backup_from_s3object(&s3object.key.into()))
+        .collect();
+
+    backups.sort_by_key(|b| b.time);
+
+    backups
+}
+
+pub fn upload_backup_to_remote(backup_file_path: PathBuf, backup_file_name: String) {
+    let bucket = create_bucket();
+
+    let mut reader = std::fs::File::open(&backup_file_path).unwrap();
+
+    bucket
+        .put_object_stream(&mut reader, backup_file_name)
+        .unwrap();
+    // assert_eq!(response_data.status_code(), 200);
+}
+
+// pub fn download_backup_from_remote() {
+//     let bucket = create_bucket();
+
+//     // create file writer
+//     let path = PathBuf::from("test.file");
+//     let mut writer = std::fs::File::create(&path).unwrap();
+
+//     let response = bucket.get_object_stream("test.file", &mut writer);
 // }
+
+pub fn delete_backup_from_remote(backup: Backup) {
+    let bucket = create_bucket();
+
+    let response_data = bucket
+        .delete_object(&backup.path.to_str().unwrap())
+        .unwrap();
+    assert_eq!(response_data.status_code(), 204);
+}
+
+fn parse_backup_from_s3object(path: &PathBuf) -> Backup {
+    let file_name = path.file_stem().unwrap().to_str().unwrap().to_string();
+
+    let parts = file_name.split("_").collect::<Vec<&str>>();
+    let app_name = parts[0].to_string();
+    let backup_type = parts[1].to_string();
+    let time = parse_timestamp(parts[2].to_string()).unwrap();
+
+    Backup {
+        path: path.clone(),
+        file_name,
+        app_name,
+        backup_type,
+        time,
+    }
+}

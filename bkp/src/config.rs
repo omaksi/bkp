@@ -7,6 +7,7 @@ use crate::storage::fs::{list_files_in_dir, read_file_to_string};
 #[derive(Deserialize, Debug)]
 pub struct Config {
     pub app_name: String,
+    pub server_name: String,
 
     pub app_root: String,
     // pub server_name: String,
@@ -18,10 +19,11 @@ pub struct Config {
     pub pre_restore_script: String,
     pub post_restore_script: String,
 
+    pub keep_full_local_backups: i16,
     // pub incremental_backup_interval_days: i32,
-    // pub full_backup_periods: Vec<i32>,
+    pub keep_full_remote_backups: i16,
     // pub backup_start_time: String,
-    pub local_storage_location: String,
+    // pub local_storage_location: String,
     // pub remote_storage_address: String,
     // pub remote_location: String,
 }

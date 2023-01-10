@@ -1,5 +1,6 @@
+server_name = 'local'
+
 app_name = 'app1'
-# server_name = 'server1'
 app_root = '/Users/ondrej/Documents/GitHub/bkp/bkp/testdata/app1/'
 
 included_paths = ['**/*']
@@ -11,13 +12,13 @@ post_backup_script = '/Users/ondrej/Documents/GitHub/bkp/bkp/testdata/scripts/ap
 pre_restore_script = ''
 post_restore_script = ''
 
-incremental_backup_interval_days = 1
-full_backup_periods = [7, 30, 180]
-backup_start_time = '04:10'
+keep_full_local_backups = 1
+keep_full_remote_backups = 10
 
-# [local]
-local_storage_location = '/Users/ondrej/Documents/GitHub/bkp/bkp/testdata/storage'
+# incremental_backup_interval_days = 1
+# backup_start_time = '04:10'
 
-# [remote]
-remote_storage_address = 'user@server'
-remote_location = '/home/backup'
+# local_storage_location = '/Users/ondrej/Documents/GitHub/bkp/bkp/testdata/storage'
+
+# remote_storage_address = 'user@server'
+# remote_location = '/home/backup'

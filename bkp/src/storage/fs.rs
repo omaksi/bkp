@@ -1,6 +1,6 @@
 // use std::fs;
 use std::{
-    fs::{metadata, read_dir, File},
+    fs::{metadata, read_dir, remove_file, File},
     io::{Error, Read},
     path::{Path, PathBuf},
 };
@@ -33,6 +33,10 @@ fn list_files_rec(dir: PathBuf, mut paths: &mut Vec<PathBuf>) -> Result<(), Erro
     Ok(())
 }
 
+pub fn delete_file(path: &PathBuf) {
+    remove_file(path).expect("Unable to delete file");
+}
+
 pub fn get_files_to_backup(
     app_root: String,
     included_paths: Vec<String>,
@@ -43,7 +47,7 @@ pub fn get_files_to_backup(
 
     // get included_pathbufs using glob
     for path in included_paths {
-        let full_path = app_root.clone() + &path;
+        let full_path = app_root.clone() + path.as_str();
         for entry in glob(&full_path).unwrap() {
             included_pathbufs.push(entry.unwrap());
         }
@@ -53,7 +57,7 @@ pub fn get_files_to_backup(
 
     // get excluded_pathbufs using glob
     for path in excluded_paths {
-        let full_path = app_root.clone() + &path;
+        let full_path = app_root.clone() + path.as_str();
         for entry in glob(&full_path).unwrap() {
             excluded_pathbufs.push(entry.unwrap());
         }

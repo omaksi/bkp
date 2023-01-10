@@ -13,14 +13,14 @@ struct Cli {
 
 #[derive(Subcommand, Debug)]
 enum Commands {
-    /// Backs apps up according config file
+    /// Lists all backups
+    List { app_name: Option<String> },
+    /// Backs apps up according to config file
     Backup(Backup),
+    /// Restores an app from a specific backup
     Restore {
         app_name: String,
         backup_name: String,
-    },
-    List {
-        app_name: Option<String>,
     },
 }
 

@@ -2,12 +2,13 @@ use std::{path::PathBuf, str::FromStr};
 
 use crate::{
     backup::{
-        do_full_backup, do_incremental_backup, get_all_backups_for_app, get_last_full_backup_time,
-        Backup,
+        do_full_backup, do_incremental_backup, get_all_local_backups,
+        get_all_local_backups_for_app, get_last_full_backup_time, Backup,
     },
     compress::decompress_archive,
     config::{get_all_configs, get_config_from_app_name},
     scripts::run_script,
+    storage::s3::get_all_remote_backups,
 };
 
 pub fn list(app_name: &Option<String>) {
@@ -16,7 +17,7 @@ pub fn list(app_name: &Option<String>) {
     match app_name {
         Some(app_name) => {
             let config = get_config_from_app_name(&app_name);
-            let backups = get_all_backups_for_app(&config);
+            let backups = get_all_local_backups_for_app(&config);
             println!("{} Backups for {}", backups.len(), app_name);
             backups.iter().for_each(|backup| {
                 println!("{} {}", backup.backup_type, backup.file_name);
@@ -24,11 +25,32 @@ pub fn list(app_name: &Option<String>) {
         }
         None => {
             println!("Listing all backups");
+
+            let all_s3_backups = get_all_remote_backups();
+
+            let all_local_backups = get_all_local_backups();
+
             let configs = get_all_configs();
             for config in configs {
-                let backups = get_all_backups_for_app(&config);
-                println!("{} Backups for {}", backups.len(), config.app_name);
-                backups.iter().for_each(|backup| {
+                // let backups = get_all_local_backups_for_app(&config);
+
+                println!("App: {}", config.app_name);
+                let local_backups = all_local_backups
+                    .iter()
+                    .filter(|b| b.app_name == config.app_name)
+                    .collect::<Vec<&Backup>>();
+
+                let s3_backups = all_s3_backups
+                    .iter()
+                    .filter(|b| b.app_name == config.app_name)
+                    .collect::<Vec<&Backup>>();
+
+                println!("{} local backups", local_backups.len());
+                local_backups.iter().for_each(|backup| {
+                    println!("{} {}", backup.backup_type, backup.file_name);
+                });
+                println!("{} remote backups", s3_backups.len());
+                s3_backups.iter().for_each(|backup| {
                     println!("{} {}", backup.backup_type, backup.file_name);
                 });
             }
@@ -54,7 +76,7 @@ pub fn incremental_backup(app_name: &String) {
 pub fn restore(app_name: String, backup_name: String) -> () {
     println!("restore");
     let config = get_config_from_app_name(&app_name);
-    let backups = get_all_backups_for_app(&config);
+    let backups = get_all_local_backups_for_app(&config);
 
     // filter backups until last full backup
     let mut backups_to_restore: Vec<Backup> = Vec::new();
