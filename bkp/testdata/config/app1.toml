@@ -1,4 +1,4 @@
-server_name = 'local'
+server_name = 'euler'
 
 app_name = 'app1'
 app_root = '/Users/ondrej/Documents/GitHub/bkp/bkp/testdata/app1/'
@@ -13,7 +13,7 @@ pre_restore_script = ''
 post_restore_script = ''
 
 keep_full_local_backups = 1
-keep_full_remote_backups = 10
+keep_full_remote_backups = 5
 
 # incremental_backup_interval_days = 1
 # backup_start_time = '04:10'

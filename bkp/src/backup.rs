@@ -13,26 +13,43 @@ use crate::{
     time::parse_timestamp,
 };
 
+#[derive(Debug, PartialEq)]
+pub enum BackupType {
+    Full,
+    Incremental,
+}
+
 #[derive(Debug)]
 pub struct Backup {
+    pub app_name: String,
+    pub server_name: String,
     pub path: PathBuf,
     pub file_name: String,
-    pub app_name: String,
-    pub backup_type: String,
+    pub backup_type: BackupType,
     pub time: DateTime<Utc>,
 }
 
-fn parse_backup_from_path(path: &PathBuf) -> Backup {
-    let file_name = path.file_stem().unwrap().to_str().unwrap().to_string();
-    let parts = file_name.split("_").collect::<Vec<&str>>();
+// backup naming [app_name]_[server_name]_[backup_type]_[timestamp].tar.gz
+pub fn parse_backup_from_path(path: &PathBuf) -> Backup {
+    // println!("Parsing backup from path: {:?}", path);
+    let file_name = path.file_name().unwrap().to_str().unwrap().to_string();
+
+    let file_stem = path.file_stem().unwrap().to_str().unwrap().to_string();
+    let parts = file_stem.split("_").collect::<Vec<&str>>();
     let app_name = parts[0].to_string();
-    let backup_type = parts[1].to_string();
-    let time = parse_timestamp(parts[2].to_string()).unwrap();
+    let server_name = parts[1].to_string();
+    let backup_type = match parts[2] {
+        "full" => BackupType::Full,
+        "incremental" => BackupType::Incremental,
+        _ => panic!("Unknown backup type"),
+    };
+    let time = parse_timestamp(parts[3].to_string()).unwrap();
 
     Backup {
         path: path.clone(),
         file_name,
         app_name,
+        server_name,
         backup_type,
         time,
     }
@@ -125,6 +142,8 @@ fn do_backup(config: &Config, paths: &Vec<PathBuf>, backup_type: &str) {
 
     let backup_file_name = config.app_name.clone()
         + "_"
+        + config.server_name.as_str()
+        + "_"
         + backup_type
         + "_"
         + Utc::now().to_rfc3339().as_str()
@@ -163,24 +182,24 @@ pub fn get_last_full_backup_time(config: &Config) -> DateTime<Utc> {
 
     let last_full_backup = backups
         .into_iter()
-        .filter(|b| b.backup_type == "full")
+        .filter(|b| b.backup_type == BackupType::Full)
         .last()
         .unwrap();
 
     last_full_backup.time
 }
 
-fn prune_local_backups(config: &Config) {
+pub fn prune_local_backups(config: &Config) {
     let backups = get_all_local_backups_for_app(config);
 
     let mut backups_to_keep = config.keep_full_local_backups;
 
     for backup in backups {
-        if backup.backup_type == "full" {
+        if backup.backup_type == BackupType::Full {
             if backups_to_keep > 0 {
                 backups_to_keep -= 1;
             } else {
-                println!("Deleting backup: {:?}", backup);
+                println!("Deleting local backup: {:?}", backup.path);
                 delete_file(&backup.path);
             }
         }
@@ -193,12 +212,12 @@ fn prune_remote_backups(config: &Config) {
     let mut backups_to_keep = config.keep_full_remote_backups;
 
     for backup in backups {
-        if backup.backup_type == "full" {
+        if backup.backup_type == BackupType::Full {
             if backups_to_keep > 0 {
                 backups_to_keep -= 1;
             } else {
-                println!("Deleting backup: {:?}", backup);
-                delete_backup_from_remote(backup);
+                println!("Deleting remote backup: {:?}", backup.path);
+                delete_backup_from_remote(&backup);
             }
         }
     }

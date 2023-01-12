@@ -1,5 +1,5 @@
 extern crate tar;
-
+// use std::io::prelude::*;
 use std::{fs::File, path::PathBuf};
 // use std::io::prelude::*;
 use tar::{Archive, Builder};
@@ -24,6 +24,11 @@ pub fn compress_files(archive: PathBuf, paths: &Vec<PathBuf>) {
         Ok(_) => (),
         Err(e) => println!("Error finishing archive: {}", e),
     }
+
+    // let tar_gz_file = File::create("foo.tar.gz").unwrap();
+    // let mut gz_writer = flate2::write::GzEncoder::new(tar_gz_file, flate2::Compression::default());
+    // // gz_writer.write_all(tar_file.read).unwrap();
+    // tar_file.read_to_end(gz_writer.).unwrap();
 }
 
 pub fn decompress_archive(archive: PathBuf, app_root: PathBuf) {

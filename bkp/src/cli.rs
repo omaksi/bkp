@@ -69,7 +69,7 @@ pub fn parse_args() -> () {
         }) => {
             println!("Running restore of {} from {}", app_name, backup_name);
 
-            restore(app_name.clone(), backup_name.clone());
+            restore(app_name, backup_name);
         }
         Some(Commands::List { app_name }) => {
             list(app_name);

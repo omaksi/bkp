@@ -4,8 +4,8 @@ use s3::creds::Credentials;
 use s3::region::Region;
 use s3::Bucket;
 
-use crate::backup::Backup;
-use crate::time::parse_timestamp;
+use crate::backup::{parse_backup_from_path, Backup};
+// use crate::time::parse_timestamp;
 
 fn create_bucket() -> Bucket {
     Bucket::new(
@@ -30,7 +30,7 @@ pub fn get_all_remote_backups() -> Vec<Backup> {
         .contents
         .clone()
         .into_iter()
-        .map(|s3object| parse_backup_from_s3object(&s3object.key.into()))
+        .map(|s3object| parse_backup_from_path(&s3object.key.into()))
         .collect();
 
     backups.sort_by_key(|b| b.time);
@@ -49,17 +49,18 @@ pub fn upload_backup_to_remote(backup_file_path: PathBuf, backup_file_name: Stri
     // assert_eq!(response_data.status_code(), 200);
 }
 
-// pub fn download_backup_from_remote() {
-//     let bucket = create_bucket();
+pub fn download_backup_from_remote(backup: &Backup) {
+    let bucket = create_bucket();
 
-//     // create file writer
-//     let path = PathBuf::from("test.file");
-//     let mut writer = std::fs::File::create(&path).unwrap();
+    // create file writer
+    let mut writer = std::fs::File::create(&backup.path).unwrap();
 
-//     let response = bucket.get_object_stream("test.file", &mut writer);
-// }
+    bucket
+        .get_object_stream(backup.path.to_str().unwrap(), &mut writer)
+        .unwrap();
+}
 
-pub fn delete_backup_from_remote(backup: Backup) {
+pub fn delete_backup_from_remote(backup: &Backup) {
     let bucket = create_bucket();
 
     let response_data = bucket
@@ -68,19 +69,19 @@ pub fn delete_backup_from_remote(backup: Backup) {
     assert_eq!(response_data.status_code(), 204);
 }
 
-fn parse_backup_from_s3object(path: &PathBuf) -> Backup {
-    let file_name = path.file_stem().unwrap().to_str().unwrap().to_string();
+// fn parse_backup_from_s3object(path: &PathBuf) -> Backup {
+//     let file_name = path.file_name().unwrap().to_str().unwrap().to_string();
 
-    let parts = file_name.split("_").collect::<Vec<&str>>();
-    let app_name = parts[0].to_string();
-    let backup_type = parts[1].to_string();
-    let time = parse_timestamp(parts[2].to_string()).unwrap();
+//     let parts = file_name.split("_").collect::<Vec<&str>>();
+//     let app_name = parts[0].to_string();
+//     let backup_type = parts[1].to_string();
+//     let time = parse_timestamp(parts[2].to_string()).unwrap();
 
-    Backup {
-        path: path.clone(),
-        file_name,
-        app_name,
-        backup_type,
-        time,
-    }
-}
+//     Backup {
+//         path: path.clone(),
+//         file_name,
+//         app_name,
+//         backup_type,
+//         time,
+//     }
+// }
