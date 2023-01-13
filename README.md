@@ -6,7 +6,7 @@ file level deduplication
 
 backups are saved locally, and remotely via s3
 
-for a quick to run s3 backend try minio, other alternatives available
+for a quick to run s3 backend try minio, other alternatives are also available. bkp expects to have a `bkp` bucket created in s3.
 
 ## how to build
 

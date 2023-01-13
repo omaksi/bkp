@@ -8,6 +8,8 @@ use simplelog::*;
 
 use std::fs::OpenOptions;
 
+use crate::globalconfig::GLOBAL_CONFIG;
+
 pub fn create_logger() {
     CombinedLogger::init(vec![
         TermLogger::new(
@@ -23,7 +25,7 @@ pub fn create_logger() {
             OpenOptions::new()
                 .create(true)
                 .append(true)
-                .open("bkp.log")
+                .open(GLOBAL_CONFIG.log_file_location.to_string())
                 .unwrap(),
         ),
     ])

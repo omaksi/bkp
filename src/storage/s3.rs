@@ -4,17 +4,26 @@ use s3::creds::Credentials;
 use s3::region::Region;
 use s3::Bucket;
 
-use crate::backup::{parse_backup_from_path, Backup};
-// use crate::time::parse_timestamp;
+use crate::{
+    backup::{parse_backup_from_path, Backup},
+    globalconfig::GLOBAL_CONFIG,
+};
 
 fn create_bucket() -> Bucket {
     Bucket::new(
         "bkp",
         Region::Custom {
-            region: "eu-central-1".to_owned(),
-            endpoint: "http://localhost:9000".to_owned(),
+            region: "eu-central-1".to_string(),
+            endpoint: GLOBAL_CONFIG.remote_storage_address.to_string(),
         },
-        Credentials::new(Some("minioadmin"), Some("minioadmin"), None, None, None).unwrap(),
+        Credentials::new(
+            Some(&GLOBAL_CONFIG.remote_storage_access_id),
+            Some(&GLOBAL_CONFIG.remote_storage_secret_key),
+            None,
+            None,
+            None,
+        )
+        .unwrap(),
     )
     .unwrap()
     .with_path_style()

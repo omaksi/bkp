@@ -1,5 +1,6 @@
-config_files_location = '/Users/ondrej/Documents/GitHub/bkp/bkp/example/config'
-local_storage_location = '/Users/ondrej/Documents/GitHub/bkp/bkp/example/storage'
+config_files_location = '/Users/ondrej/Documents/GitHub/bkp/example/config'
+local_storage_location = '/Users/ondrej/Documents/GitHub/bkp/example/storage'
 remote_storage_address = 'http://localhost:9000'
 remote_storage_access_id = 'minioadmin'
 remote_storage_secret_key = 'minioadmin'
+log_file_location = '/Users/ondrej/Documents/GitHub/bkp/example/log/bkp.log'

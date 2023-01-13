@@ -9,6 +9,7 @@ pub struct GlobalConfig {
     pub remote_storage_address: String,
     pub remote_storage_access_id: String,
     pub remote_storage_secret_key: String,
+    pub log_file_location: String,
 }
 pub static GLOBAL_CONFIG: Lazy<GlobalConfig> = Lazy::new(|| load_global_config());
 
