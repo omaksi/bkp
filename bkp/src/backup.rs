@@ -1,11 +1,12 @@
 use std::path::PathBuf;
 
 use chrono::{DateTime, Utc};
+use log::info;
 
 use crate::{
     compress::compress_files,
     config::Config,
-    globalconfig::get_global_config,
+    globalconfig::GLOBAL_CONFIG,
     storage::{
         fs::{delete_file, filter_files_newer_than, get_files_to_backup, list_files_in_dir},
         s3::{delete_backup_from_remote, get_all_remote_backups, upload_backup_to_remote},
@@ -63,9 +64,7 @@ fn parse_backups_from_paths(paths: Vec<PathBuf>) -> Vec<Backup> {
 }
 
 pub fn get_all_local_backups() -> Vec<Backup> {
-    let global_config = get_global_config();
-
-    let files = list_files_in_dir(global_config.local_storage_location.clone().into()).unwrap();
+    let files = list_files_in_dir(GLOBAL_CONFIG.local_storage_location.clone().into()).unwrap();
 
     let mut backups = parse_backups_from_paths(files);
 
@@ -150,8 +149,8 @@ fn do_backup(config: &Config, paths: &Vec<PathBuf>, backup_type: &str) {
         + ".tar";
 
     // create path for new backup file, it should be config.local_storage_location + app_name + timestamp + .tar
-    let backup_file_path = PathBuf::from(get_global_config().local_storage_location.clone())
-        .join(backup_file_name.as_str());
+    let backup_file_path =
+        PathBuf::from(GLOBAL_CONFIG.local_storage_location.clone()).join(backup_file_name.as_str());
 
     println!("Backup file path: {:?}", backup_file_path);
 
@@ -199,7 +198,7 @@ pub fn prune_local_backups(config: &Config) {
             if backups_to_keep > 0 {
                 backups_to_keep -= 1;
             } else {
-                println!("Deleting local backup: {:?}", backup.path);
+                info!("Deleting local backup: {:?}", backup.path);
                 delete_file(&backup.path);
             }
         }
@@ -216,7 +215,7 @@ fn prune_remote_backups(config: &Config) {
             if backups_to_keep > 0 {
                 backups_to_keep -= 1;
             } else {
-                println!("Deleting remote backup: {:?}", backup.path);
+                info!("Deleting remote backup: {:?}", backup.path);
                 delete_backup_from_remote(&backup);
             }
         }

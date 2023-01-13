@@ -1,8 +1,7 @@
 use clap::{Args, Parser, Subcommand};
+use log::{error, info};
 
 use crate::actions::{full_backup, incremental_backup, list, restore};
-
-// use crate::actions::{full_backup_action, incremental_backup_action, list, restore};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -40,26 +39,26 @@ enum BackupTypes {
 pub fn parse_args() -> () {
     let args = Cli::parse();
 
-    // println!("{:?}", args);
+    // info!("{:?}", args);
 
     match &args.command {
         Some(Commands::Backup(backup)) => {
-            // println!("Automatic backup command");
+            // info!("Automatic backup command");
             // automatic_backup();
 
             match &backup.command {
                 Some(BackupTypes::Full { app_name }) => {
-                    println!("Running full backup of {}", app_name);
+                    info!("Running full backup of {}", app_name);
 
                     full_backup(app_name);
                 }
                 Some(BackupTypes::Incremental { app_name }) => {
-                    println!("Running incremental backup of {}", app_name);
+                    info!("Running incremental backup of {}", app_name);
 
                     incremental_backup(app_name);
                 }
                 None => {
-                    println!("Please specify backup type");
+                    info!("Please specify backup type");
                 }
             }
         }
@@ -67,7 +66,7 @@ pub fn parse_args() -> () {
             app_name,
             backup_name,
         }) => {
-            println!("Running restore of {} from {}", app_name, backup_name);
+            info!("Running restore of {} from {}", app_name, backup_name);
 
             restore(app_name, backup_name);
         }
@@ -75,7 +74,7 @@ pub fn parse_args() -> () {
             list(app_name);
         }
         None => {
-            // println!("No command");
+            error!("No command");
         }
     }
 }

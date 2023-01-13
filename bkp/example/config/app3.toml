@@ -1,6 +1,6 @@
-server_name = 'euler'
+server_name = 'Gauss'
 
-app_name = 'app1'
+app_name = 'app3'
 app_root = '/Users/ondrej/Documents/GitHub/bkp/bkp/testdata/app1/'
 
 included_paths = ['**/*']
@@ -14,11 +14,3 @@ post_restore_script = ''
 
 keep_full_local_backups = 1
 keep_full_remote_backups = 5
-
-# incremental_backup_interval_days = 1
-# backup_start_time = '04:10'
-
-# local_storage_location = '/Users/ondrej/Documents/GitHub/bkp/bkp/testdata/storage'
-
-# remote_storage_address = 'user@server'
-# remote_location = '/home/backup'

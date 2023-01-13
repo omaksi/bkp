@@ -1,6 +1,8 @@
+use log::{error, info};
+
 pub fn run_script(script: &str) -> () {
     if script == "" {
-        println!("No script to run");
+        error!("No script to run");
         return;
     }
 
@@ -12,11 +14,11 @@ pub fn run_script(script: &str) -> () {
 
     match output.status.success() {
         true => {
-            println!("Script {} ran successfully", script);
+            info!("Script {} ran successfully", script);
         }
         false => {
-            println!("Script {} failed", script);
-            println!("stderr: {}", String::from_utf8_lossy(&output.stderr));
+            error!("Script {} failed", script);
+            info!("stderr: {}", String::from_utf8_lossy(&output.stderr));
         }
     }
 }

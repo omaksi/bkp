@@ -1,16 +1,26 @@
 # bkp
 
-simple backup solution
+simple backup utility
+
+file level deduplication
 
 backups are saved locally, and remotely wi
 
-## how to run
+## how to build
 
 To run, you need rust, (install with rustup) Then
 
 ```
 cargo build --release
 ```
+
+## to run
+
+first you need a .bkpconfig file in your homedir, see example dir for content
+
+then create a config file for each app you want to backup, see example/config dir
+
+then run `bkp` manually, or schedule via cron
 
 ## backup configuration
 

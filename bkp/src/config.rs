@@ -1,8 +1,12 @@
 use std::path::PathBuf;
 
+use log::error;
 use serde::Deserialize;
 
-use crate::storage::fs::{list_files_in_dir, read_file_to_string};
+use crate::{
+    globalconfig::GLOBAL_CONFIG,
+    storage::fs::{list_files_in_dir, read_file_to_string},
+};
 
 #[derive(Deserialize, Debug)]
 pub struct Config {
@@ -20,15 +24,8 @@ pub struct Config {
     pub post_restore_script: String,
 
     pub keep_full_local_backups: i16,
-    // pub incremental_backup_interval_days: i32,
     pub keep_full_remote_backups: i16,
-    // pub backup_start_time: String,
-    // pub local_storage_location: String,
-    // pub remote_storage_address: String,
-    // pub remote_location: String,
 }
-
-const CONFIG_FILES_LOCATION: &str = "../testdata/config";
 
 fn parse_configs(path: PathBuf) -> Vec<Config> {
     let config_files = list_files_in_dir(path);
@@ -39,7 +36,7 @@ fn parse_configs(path: PathBuf) -> Vec<Config> {
         let config = read_file_to_string(config_file.as_path());
         match toml::from_str(config.as_str()) {
             Ok(config) => configs.push(config),
-            Err(e) => println!("Error parsing config file: {}", e),
+            Err(e) => error!("Error parsing config file: {}", e),
         }
     }
 
@@ -47,11 +44,11 @@ fn parse_configs(path: PathBuf) -> Vec<Config> {
 }
 
 pub fn get_all_configs() -> Vec<Config> {
-    parse_configs(PathBuf::from(CONFIG_FILES_LOCATION))
+    parse_configs(PathBuf::from(GLOBAL_CONFIG.config_files_location.clone()))
 }
 
 pub fn get_config_from_app_name(app_name: &String) -> Config {
-    let configs = parse_configs(PathBuf::from(CONFIG_FILES_LOCATION));
+    let configs = parse_configs(PathBuf::from(GLOBAL_CONFIG.config_files_location.clone()));
 
     for config in configs {
         if config.app_name == *app_name {
