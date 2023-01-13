@@ -4,7 +4,9 @@ simple backup utility
 
 file level deduplication
 
-backups are saved locally, and remotely wi
+backups are saved locally, and remotely via s3
+
+for a quick to run s3 backend try minio, other alternatives available
 
 ## how to build
 
@@ -14,7 +16,7 @@ To run, you need rust, (install with rustup) Then
 cargo build --release
 ```
 
-## to run
+## how to run
 
 first you need a .bkpconfig file in your homedir, see example dir for content
 
