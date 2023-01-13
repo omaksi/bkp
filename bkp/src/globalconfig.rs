@@ -17,7 +17,10 @@ const GLOBAL_CONFIG_FILENAME: &str = ".bkpconfig";
 pub fn load_global_config() -> GlobalConfig {
     let home_dir = home::home_dir().unwrap().join(GLOBAL_CONFIG_FILENAME);
     let config = read_file_to_string(&home_dir);
-    toml::from_str(config.as_str()).unwrap()
+    match toml::from_str(config.as_str()) {
+        Ok(config) => config,
+        Err(e) => panic!("Error parsing global config file: {}", e),
+    }
 }
 
 // fn get_global_config() -> GlobalConfig {

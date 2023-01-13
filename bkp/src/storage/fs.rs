@@ -76,7 +76,7 @@ pub fn get_files_to_backup(
 
 pub fn filter_files_newer_than(
     paths: &Vec<PathBuf>,
-    time: DateTime<Utc>,
+    time: &DateTime<Utc>,
 ) -> Result<Vec<PathBuf>, Error> {
     let mut filtered_paths: Vec<PathBuf> = Vec::new();
 
@@ -84,7 +84,7 @@ pub fn filter_files_newer_than(
         let last_modified = metadata(path)?.modified()?;
         let last_modified: chrono::DateTime<Utc> = DateTime::from(last_modified);
 
-        if last_modified > time {
+        if last_modified > *time {
             filtered_paths.push(path.clone());
         }
     }

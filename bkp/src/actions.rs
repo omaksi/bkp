@@ -70,7 +70,7 @@ pub fn incremental_backup(app_name: &String) {
     let config = get_config_from_app_name(app_name);
     let last_backup_time = get_last_full_backup_time(&config);
     run_script(&config.pre_backup_script);
-    do_incremental_backup(&config, last_backup_time);
+    do_incremental_backup(&config, &last_backup_time);
     run_script(&config.post_backup_script);
 }
 

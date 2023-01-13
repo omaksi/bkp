@@ -100,15 +100,15 @@ pub fn do_full_backup(config: &Config) {
     prune_remote_backups(config);
 }
 
-pub fn do_incremental_backup(config: &Config, last_backup_time: DateTime<Utc>) {
+pub fn do_incremental_backup(config: &Config, last_backup_time: &DateTime<Utc>) {
     let paths = get_files_to_backup(
         config.app_root.clone(),
         config.included_paths.clone(),
         config.excluded_paths.clone(),
     );
 
-    println!("Paths: {:?}", paths);
-    println!("Last backup time: {:?}", last_backup_time);
+    // println!("Paths: {:?}", paths);
+    // println!("Last backup time: {:?}", last_backup_time);
 
     // filter paths using filter_files_newer_than and lastBackupTime
     let paths = match filter_files_newer_than(&paths, last_backup_time) {
@@ -119,7 +119,7 @@ pub fn do_incremental_backup(config: &Config, last_backup_time: DateTime<Utc>) {
         }
     };
 
-    println!("Filtered paths: {:?}", paths);
+    // println!("Filtered paths: {:?}", paths);
 
     do_backup(config, &paths, "incremental");
 }
@@ -133,10 +133,10 @@ fn do_backup(config: &Config, paths: &Vec<PathBuf>, backup_type: &str) {
     // save current dir
     let current_dir = std::env::current_dir().unwrap();
 
-    // set current dir to config.included_paths[0]
+    // set current dir to app_root
     std::env::set_current_dir(config.app_root.clone()).unwrap();
 
-    println!("Found {} files", paths.len());
+    // println!("Found {} files", paths.len());
     // println!("{:?}", paths);
 
     let backup_file_name = config.app_name.clone()
@@ -152,7 +152,7 @@ fn do_backup(config: &Config, paths: &Vec<PathBuf>, backup_type: &str) {
     let backup_file_path =
         PathBuf::from(GLOBAL_CONFIG.local_storage_location.clone()).join(backup_file_name.as_str());
 
-    println!("Backup file path: {:?}", backup_file_path);
+    // println!("Backup file path: {:?}", backup_file_path);
 
     // remove prefix from paths
     let paths = paths
@@ -164,10 +164,10 @@ fn do_backup(config: &Config, paths: &Vec<PathBuf>, backup_type: &str) {
         })
         .collect::<Vec<PathBuf>>();
 
-    println!("Compressing {} files", paths.len());
+    info!("Compressing {} files", paths.len());
 
     // call compress function with backup_file_path and paths
-    compress_files(backup_file_path.clone(), &paths);
+    compress_files(&backup_file_path, &paths);
 
     // upload file to s3
     upload_backup_to_remote(backup_file_path, backup_file_name);
