@@ -1,3 +1,5 @@
+use std::process::exit;
+
 use log::{error, info};
 
 pub fn run_script(script: &str) -> () {
@@ -18,7 +20,8 @@ pub fn run_script(script: &str) -> () {
         }
         false => {
             error!("Script {} failed", script);
-            info!("stderr: {}", String::from_utf8_lossy(&output.stderr));
+            error!("{}", String::from_utf8_lossy(&output.stderr));
+            exit(1);
         }
     }
 }

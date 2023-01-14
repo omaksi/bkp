@@ -1,13 +1,13 @@
 server_name = 'euler'
 
 app_name = 'app1'
-app_root = '/Users/ondrej/Documents/GitHub/bkp/bkp/testdata/app1/'
+app_root = '/Users/ondrej/Documents/GitHub/bkp/example/app1/'
 
 included_paths = ['**/*']
 excluded_paths = ['logs.txt']
 
-pre_backup_script = '/Users/ondrej/Documents/GitHub/bkp/bkp/testdata/scripts/app1/pre_backup.sh'
-post_backup_script = '/Users/ondrej/Documents/GitHub/bkp/bkp/testdata/scripts/app1/post_backup.sh'
+pre_backup_script = '/Users/ondrej/Documents/GitHub/bkp/example/scripts/app1/pre_backup.sh'
+post_backup_script = '/Users/ondrej/Documents/GitHub/bkp/example/scripts/app1/post_backup.sh'
 
 pre_restore_script = ''
 post_restore_script = ''

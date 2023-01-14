@@ -1,10 +1,12 @@
 use std::{path::PathBuf, str::FromStr};
 
+use log::info;
+
 use crate::{
     backup::{
         do_full_backup, do_incremental_backup, get_all_local_backups,
-        get_all_local_backups_for_app, get_last_full_backup_time, prune_local_backups, Backup,
-        BackupType,
+        get_all_local_backups_for_app, get_last_full_backup_time, prune_local_backups,
+        prune_remote_backups, Backup, BackupType,
     },
     compress::decompress_archive,
     config::{get_all_configs, get_config_from_app_name},
@@ -19,13 +21,13 @@ pub fn list(app_name: &Option<String>) {
         Some(app_name) => {
             let config = get_config_from_app_name(&app_name);
             let backups = get_all_local_backups_for_app(&config);
-            println!("{} Backups for {}", backups.len(), app_name);
+            info!("{} Backups for {}", backups.len(), app_name);
             backups.iter().for_each(|backup| {
-                println!("{:?} {}", backup.backup_type, backup.file_name);
+                info!("{:?} {}", backup.backup_type, backup.file_name);
             });
         }
         None => {
-            println!("Listing all backups");
+            info!("Listing all backups");
 
             let all_s3_backups = get_all_remote_backups();
 
@@ -35,7 +37,7 @@ pub fn list(app_name: &Option<String>) {
             for config in configs {
                 // let backups = get_all_local_backups_for_app(&config);
 
-                println!("App: {}", config.app_name);
+                info!("App: {}", config.app_name);
                 let local_backups = all_local_backups
                     .iter()
                     .filter(|b| b.app_name == config.app_name)
@@ -46,13 +48,13 @@ pub fn list(app_name: &Option<String>) {
                     .filter(|b| b.app_name == config.app_name)
                     .collect::<Vec<&Backup>>();
 
-                println!("{} local backups", local_backups.len());
+                info!("{} local backups", local_backups.len());
                 local_backups.iter().for_each(|backup| {
-                    println!("{:?} {}", backup.backup_type, backup.file_name);
+                    info!("{:?} {}", backup.backup_type, backup.file_name);
                 });
-                println!("{} remote backups", s3_backups.len());
+                info!("{} remote backups", s3_backups.len());
                 s3_backups.iter().for_each(|backup| {
-                    println!("{:?} {}", backup.backup_type, backup.file_name);
+                    info!("{:?} {}", backup.backup_type, backup.file_name);
                 });
             }
         }
@@ -61,21 +63,31 @@ pub fn list(app_name: &Option<String>) {
 
 pub fn full_backup(app_name: &String) {
     let config = get_config_from_app_name(app_name);
+    // info!("Running full backup of {}", app_name);
+    info!("Pre backup script: {:?}", config.pre_backup_script);
     run_script(&config.pre_backup_script);
     do_full_backup(&config);
+    info!("Post backup script: {:?}", config.post_backup_script);
     run_script(&config.post_backup_script);
+    info!("Pruning local backups");
+    prune_local_backups(&config);
+    info!("Pruning remote backups");
+    prune_remote_backups(&config);
 }
 
 pub fn incremental_backup(app_name: &String) {
     let config = get_config_from_app_name(app_name);
     let last_backup_time = get_last_full_backup_time(&config);
+    info!("Pre backup script: {:?}", config.pre_backup_script);
     run_script(&config.pre_backup_script);
     do_incremental_backup(&config, &last_backup_time);
+    info!("Post backup script: {:?}", config.post_backup_script);
     run_script(&config.post_backup_script);
 }
 
 pub fn restore(app_name: &String, backup_name: &String) -> () {
-    println!("restore");
+    // println!("restore");
+    info!("Restoring {} from {}", app_name, backup_name);
     let config = get_config_from_app_name(app_name);
     let local_backups = get_all_local_backups_for_app(&config);
 
@@ -96,7 +108,7 @@ pub fn restore(app_name: &String, backup_name: &String) -> () {
     }
 
     if !found {
-        println!("Backup not found locally");
+        // println!("Backup not found locally");
 
         let remote_backups = get_all_remote_backups();
 
@@ -112,18 +124,25 @@ pub fn restore(app_name: &String, backup_name: &String) -> () {
 
     backups_to_restore.reverse();
 
-    println!("backups_to_restore: {:#?}", backups_to_restore);
-
-    run_script(&config.pre_restore_script);
+    if &config.pre_restore_script == "" {
+        info!("No pre restore script");
+    } else {
+        run_script(&config.pre_restore_script);
+    }
 
     for backup in backups_to_restore {
+        info!("Restoring {}", backup.file_name);
         decompress_archive(
             backup.path,
             PathBuf::from_str(config.app_root.as_str()).unwrap(),
         );
     }
 
-    run_script(&config.post_restore_script);
+    if &config.post_restore_script == "" {
+        info!("No post restore script");
+    } else {
+        run_script(&config.post_restore_script);
+    }
 
     prune_local_backups(&config)
 }

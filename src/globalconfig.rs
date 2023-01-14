@@ -1,3 +1,6 @@
+use std::process::exit;
+
+use log::error;
 use once_cell::sync::Lazy;
 use serde::Deserialize;
 
@@ -20,7 +23,10 @@ pub fn load_global_config() -> GlobalConfig {
     let config = read_file_to_string(&home_dir);
     match toml::from_str(config.as_str()) {
         Ok(config) => config,
-        Err(e) => panic!("Error parsing global config file: {}", e),
+        Err(e) => {
+            error!("Error parsing global config file: {}", e);
+            exit(1)
+        }
     }
 }
 

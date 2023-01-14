@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use chrono::{DateTime, Utc};
-use log::info;
+use log::{error, info};
 
 use crate::{
     compress::compress_files,
@@ -95,9 +95,6 @@ pub fn do_full_backup(config: &Config) {
     );
 
     do_backup(config, &paths, "full");
-
-    prune_local_backups(config);
-    prune_remote_backups(config);
 }
 
 pub fn do_incremental_backup(config: &Config, last_backup_time: &DateTime<Utc>) {
@@ -199,13 +196,18 @@ pub fn prune_local_backups(config: &Config) {
                 backups_to_keep -= 1;
             } else {
                 info!("Deleting local backup: {:?}", backup.path);
-                delete_file(&backup.path);
+                match delete_file(&backup.path) {
+                    Ok(_) => {}
+                    Err(e) => {
+                        error!("Error deleting file: {}", e);
+                    }
+                };
             }
         }
     }
 }
 
-fn prune_remote_backups(config: &Config) {
+pub fn prune_remote_backups(config: &Config) {
     let backups = get_all_remote_backups();
 
     let mut backups_to_keep = config.keep_full_remote_backups;

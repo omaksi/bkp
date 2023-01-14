@@ -4,16 +4,17 @@ extern crate simplelog;
 
 // use log::{debug, error, info};
 
+use log::{debug, error};
 use simplelog::*;
 
-use std::fs::OpenOptions;
+use std::{fs::OpenOptions, process::exit};
 
 use crate::globalconfig::GLOBAL_CONFIG;
 
 pub fn create_logger() {
-    CombinedLogger::init(vec![
+    match CombinedLogger::init(vec![
         TermLogger::new(
-            LevelFilter::Warn,
+            LevelFilter::Info,
             Config::default(),
             TerminalMode::Mixed,
             ColorChoice::Auto,
@@ -22,16 +23,23 @@ pub fn create_logger() {
             LevelFilter::Info,
             Config::default(),
             // File::create("bkp.log").unwrap(),
-            OpenOptions::new()
+            match OpenOptions::new()
                 .create(true)
                 .append(true)
                 .open(GLOBAL_CONFIG.log_file_location.to_string())
-                .unwrap(),
+            {
+                Ok(file) => file,
+                Err(e) => {
+                    error!("Unable to open log file: {}", e);
+                    exit(1)
+                }
+            },
         ),
-    ])
-    .unwrap();
-
-    // error!("Bright red error");
-    // info!("This only appears in the log file");
-    // debug!("This level is currently not enabled for any logger");
+    ]) {
+        Ok(_) => debug!("Logger initialized"),
+        Err(e) => {
+            error!("Unable to initialize logger: {}", e);
+            exit(1)
+        }
+    }
 }

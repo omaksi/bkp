@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{path::PathBuf, process::exit};
 
 use log::error;
 use serde::Deserialize;
@@ -36,7 +36,10 @@ fn parse_configs(path: PathBuf) -> Vec<Config> {
         let config = read_file_to_string(config_file.as_path());
         match toml::from_str(config.as_str()) {
             Ok(config) => configs.push(config),
-            Err(e) => error!("Error parsing config file: {}", e),
+            Err(e) => {
+                error!("Error parsing config file: {}", e);
+                exit(1)
+            }
         }
     }
 

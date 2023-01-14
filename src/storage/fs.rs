@@ -33,8 +33,8 @@ fn list_files_rec(dir: PathBuf, mut paths: &mut Vec<PathBuf>) -> Result<(), Erro
     Ok(())
 }
 
-pub fn delete_file(path: &PathBuf) {
-    remove_file(path).expect("Unable to delete file");
+pub fn delete_file(path: &PathBuf) -> Result<(), Error> {
+    remove_file(path)
 }
 
 pub fn get_files_to_backup(

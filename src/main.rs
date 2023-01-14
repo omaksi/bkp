@@ -10,7 +10,6 @@ mod storage;
 mod time;
 
 // use std::env;
-
 use crate::{cli::parse_args, logger::create_logger};
 
 fn main() {
