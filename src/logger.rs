@@ -30,8 +30,7 @@ pub fn create_logger() {
             {
                 Ok(file) => file,
                 Err(e) => {
-                    error!("Unable to open log file: {}", e);
-                    exit(1)
+                    panic!("Unable to open log file for write: {}", e);
                 }
             },
         ),
