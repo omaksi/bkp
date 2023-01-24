@@ -213,7 +213,7 @@ pub fn prune_remote_backups(config: &Config) {
     let mut backups_to_keep = config.keep_full_remote_backups;
 
     for backup in backups {
-        if backup.backup_type == BackupType::Full {
+        if backup.backup_type == BackupType::Full && backup.app_name == config.app_name {
             if backups_to_keep > 0 {
                 backups_to_keep -= 1;
             } else {
