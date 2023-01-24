@@ -8,7 +8,7 @@ use crate::{
     storage::fs::{list_files_in_dir, read_file_to_string},
 };
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct Config {
     pub app_name: String,
     pub server_name: String,

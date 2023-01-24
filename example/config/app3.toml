@@ -1,4 +1,4 @@
-server_name = 'Gauss'
+server_name = 'gauss'
 
 app_name = 'app3'
 app_root = '/Users/ondrej/Documents/GitHub/bkp/example/app1/'

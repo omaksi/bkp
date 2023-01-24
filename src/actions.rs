@@ -27,14 +27,15 @@ pub fn list(app_name: &Option<String>) {
             });
         }
         None => {
-            info!("Listing all backups");
+            info!("--------------------------------------------");
+            info!("Listing all backups from local applications");
 
-            let all_s3_backups = get_all_remote_backups();
+            let all_remote_backups = get_all_remote_backups();
 
             let all_local_backups = get_all_local_backups();
 
             let configs = get_all_configs();
-            for config in configs {
+            for config in configs.to_vec() {
                 // let backups = get_all_local_backups_for_app(&config);
 
                 info!("App: {}", config.app_name);
@@ -43,7 +44,7 @@ pub fn list(app_name: &Option<String>) {
                     .filter(|b| b.app_name == config.app_name)
                     .collect::<Vec<&Backup>>();
 
-                let s3_backups = all_s3_backups
+                let remote_backups = all_remote_backups
                     .iter()
                     .filter(|b| b.app_name == config.app_name)
                     .collect::<Vec<&Backup>>();
@@ -52,8 +53,44 @@ pub fn list(app_name: &Option<String>) {
                 local_backups.iter().for_each(|backup| {
                     info!("{:?} {}", backup.backup_type, backup.file_name);
                 });
-                info!("{} remote backups", s3_backups.len());
-                s3_backups.iter().for_each(|backup| {
+                info!("{} remote backups", remote_backups.len());
+                remote_backups.iter().for_each(|backup| {
+                    info!("{:?} {}", backup.backup_type, backup.file_name);
+                });
+            }
+
+            let mut remote_only_backups = all_remote_backups
+                .iter()
+                .filter(|b| configs.iter().all(|c| c.app_name != b.app_name))
+                .collect::<Vec<&Backup>>();
+
+            if remote_only_backups.len() > 0 {
+                info!("--------------------------------------------");
+                info!("Listing all backups from remote applications");
+            } else {
+                return;
+            }
+
+            remote_only_backups.sort_by_key(|b| b.app_name.clone());
+
+            let mut remote_only_backups_unique_app_names = remote_only_backups
+                .iter()
+                .map(|b| b.app_name.clone())
+                .collect::<Vec<String>>();
+
+            remote_only_backups_unique_app_names.dedup();
+
+            for app_name in remote_only_backups_unique_app_names {
+                info!("App: {}", app_name);
+                let mut remote_backups = remote_only_backups
+                    .iter()
+                    .filter(|b| b.app_name == app_name)
+                    .collect::<Vec<&&Backup>>();
+
+                remote_backups.sort_by_key(|b| b.file_name.clone());
+
+                info!("{} remote backups", remote_backups.len());
+                remote_backups.iter().for_each(|backup| {
                     info!("{:?} {}", backup.backup_type, backup.file_name);
                 });
             }

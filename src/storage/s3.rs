@@ -1,5 +1,6 @@
 use std::path::PathBuf;
 
+use log::info;
 use s3::creds::Credentials;
 use s3::region::Region;
 use s3::Bucket;
@@ -51,7 +52,7 @@ pub fn upload_backup_to_remote(backup_file_path: PathBuf, backup_file_name: Stri
     let bucket = create_bucket();
 
     let mut reader = std::fs::File::open(&backup_file_path).unwrap();
-
+    info!("Uploading backup to remote storage: {:?}", backup_file_path);
     bucket
         .put_object_stream(&mut reader, backup_file_name)
         .unwrap();
