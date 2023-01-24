@@ -35,7 +35,8 @@ pub fn parse_backup_from_path(path: &PathBuf) -> Backup {
     // println!("Parsing backup from path: {:?}", path);
     let file_name = path.file_name().unwrap().to_str().unwrap().to_string();
 
-    let file_stem = path.file_stem().unwrap().to_str().unwrap().to_string();
+    let file_stem = file_name.split(".tar").collect::<Vec<&str>>()[0];
+
     let parts = file_stem.split("_").collect::<Vec<&str>>();
     let app_name = parts[0].to_string();
     let server_name = parts[1].to_string();
@@ -54,6 +55,21 @@ pub fn parse_backup_from_path(path: &PathBuf) -> Backup {
         backup_type,
         time,
     }
+}
+
+pub fn get_backup_path_with_extension(path: &PathBuf, extension: &str) -> PathBuf {
+    let mut new_path = path.clone();
+    new_path.set_extension(
+        path.extension()
+            .ok_or("No extension found")
+            .unwrap()
+            .to_str()
+            .ok_or("No extension found")
+            .unwrap()
+            .to_string()
+            + extension,
+    );
+    new_path
 }
 
 fn parse_backups_from_paths(paths: Vec<PathBuf>) -> Vec<Backup> {
@@ -142,8 +158,7 @@ fn do_backup(config: &Config, paths: &Vec<PathBuf>, backup_type: &str) {
         + "_"
         + backup_type
         + "_"
-        + Utc::now().to_rfc3339().as_str()
-        + ".tar";
+        + Utc::now().to_rfc3339().as_str();
 
     // create path for new backup file, it should be config.local_storage_location + app_name + timestamp + .tar
     let backup_file_path =

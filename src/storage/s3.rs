@@ -6,7 +6,7 @@ use s3::region::Region;
 use s3::Bucket;
 
 use crate::{
-    backup::{parse_backup_from_path, Backup},
+    backup::{get_backup_path_with_extension, parse_backup_from_path, Backup},
     globalconfig::GLOBAL_CONFIG,
 };
 
@@ -51,7 +51,10 @@ pub fn get_all_remote_backups() -> Vec<Backup> {
 pub fn upload_backup_to_remote(backup_file_path: PathBuf, backup_file_name: String) {
     let bucket = create_bucket();
 
-    let mut reader = std::fs::File::open(&backup_file_path).unwrap();
+    let backup_file_path_with_extension =
+        get_backup_path_with_extension(&backup_file_path, ".tar.gz");
+
+    let mut reader = std::fs::File::open(&backup_file_path_with_extension).unwrap();
     info!("Uploading backup to remote storage: {:?}", backup_file_path);
     bucket
         .put_object_stream(&mut reader, backup_file_name)
