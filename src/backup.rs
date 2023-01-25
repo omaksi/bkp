@@ -14,13 +14,13 @@ use crate::{
     time::parse_timestamp,
 };
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum BackupType {
     Full,
     Incremental,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Backup {
     pub app_name: String,
     pub server_name: String,
@@ -86,6 +86,8 @@ pub fn get_all_local_backups() -> Vec<Backup> {
 
     backups.sort_by_key(|b| b.time);
 
+    backups.reverse();
+
     backups
 }
 
@@ -104,21 +106,16 @@ pub fn get_all_local_backups_for_app(config: &Config) -> Vec<Backup> {
 }
 
 pub fn do_full_backup(config: &Config) {
-    let paths = get_files_to_backup(
-        config.app_root.clone(),
-        config.included_paths.clone(),
-        config.excluded_paths.clone(),
-    );
+    let paths = get_files_to_backup(&config);
 
     do_backup(config, &paths, "full");
 }
 
-pub fn do_incremental_backup(config: &Config, last_backup_time: &DateTime<Utc>) {
-    let paths = get_files_to_backup(
-        config.app_root.clone(),
-        config.included_paths.clone(),
-        config.excluded_paths.clone(),
-    );
+pub fn get_files_changed_since_backup(
+    config: &Config,
+    last_backup_time: &DateTime<Utc>,
+) -> Vec<PathBuf> {
+    let paths = get_files_to_backup(&config);
 
     // println!("Paths: {:?}", paths);
     // println!("Last backup time: {:?}", last_backup_time);
@@ -127,14 +124,17 @@ pub fn do_incremental_backup(config: &Config, last_backup_time: &DateTime<Utc>) 
     let paths = match filter_files_newer_than(&paths, last_backup_time) {
         Ok(paths) => paths,
         Err(e) => {
-            println!("Error: Couldn't filter paths based on modified time {}", e);
-            return;
+            panic!("Error: Couldn't filter paths based on modified time {}", e);
         }
     };
 
-    // println!("Filtered paths: {:?}", paths);
+    paths
 
-    do_backup(config, &paths, "incremental");
+    // paths.len() > 0
+}
+
+pub fn do_incremental_backup(config: &Config, paths: &Vec<PathBuf>) {
+    do_backup(&config, &paths, "incremental");
 }
 
 fn do_backup(config: &Config, paths: &Vec<PathBuf>, backup_type: &str) {
@@ -188,17 +188,25 @@ fn do_backup(config: &Config, paths: &Vec<PathBuf>, backup_type: &str) {
     std::env::set_current_dir(current_dir).unwrap();
 }
 
-pub fn get_last_full_backup_time(config: &Config) -> DateTime<Utc> {
+pub fn get_last_backup_time(config: &Config) -> DateTime<Utc> {
     let backups = get_all_local_backups_for_app(config);
 
-    let last_full_backup = backups
-        .into_iter()
-        .filter(|b| b.backup_type == BackupType::Full)
-        .last()
-        .unwrap();
+    let last_full_backup = &backups.iter().last().unwrap();
 
     last_full_backup.time
 }
+
+// pub fn get_last_full_backup_time(config: &Config) -> DateTime<Utc> {
+//     let backups = get_all_local_backups_for_app(config);
+
+//     let last_full_backup = backups
+//         .into_iter()
+//         .filter(|b| b.backup_type == BackupType::Full)
+//         .last()
+//         .unwrap();
+
+//     last_full_backup.time
+// }
 
 pub fn prune_local_backups(config: &Config) {
     let backups = get_all_local_backups_for_app(config);

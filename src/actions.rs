@@ -1,12 +1,12 @@
 use std::{path::PathBuf, str::FromStr};
 
-use log::info;
+use log::{error, info};
 
 use crate::{
     backup::{
         do_full_backup, do_incremental_backup, get_all_local_backups,
-        get_all_local_backups_for_app, get_last_full_backup_time, prune_local_backups,
-        prune_remote_backups, Backup, BackupType,
+        get_all_local_backups_for_app, get_files_changed_since_backup, get_last_backup_time,
+        prune_local_backups, prune_remote_backups, Backup, BackupType,
     },
     compress::decompress_archive,
     config::{get_all_configs, get_config_from_app_name},
@@ -114,10 +114,15 @@ pub fn full_backup(app_name: &String) {
 
 pub fn incremental_backup(app_name: &String) {
     let config = get_config_from_app_name(app_name);
-    let last_backup_time = get_last_full_backup_time(&config);
+    let last_backup_time = get_last_backup_time(&config);
+    let files_changed_since_backup = get_files_changed_since_backup(&config, &last_backup_time);
+    if files_changed_since_backup.len() == 0 {
+        info!("No files changed since last backup, skipping incremental backup.");
+        return;
+    }
     info!("Pre backup script: {:?}", config.pre_backup_script);
     run_script(&config.pre_backup_script);
-    do_incremental_backup(&config, &last_backup_time);
+    do_incremental_backup(&config, &files_changed_since_backup);
     info!("Post backup script: {:?}", config.post_backup_script);
     run_script(&config.post_backup_script);
 }
@@ -132,15 +137,17 @@ pub fn restore(app_name: &String, backup_name: &String) -> () {
     let mut backups_to_restore: Vec<Backup> = Vec::new();
     let mut found = false;
     for backup in local_backups {
-        if backup.file_name == *backup_name {
+        println!("{:?} {}", backup.backup_type, backup.file_name);
+        if !found && backup.file_name == *backup_name {
             found = true;
         }
+
         if found {
+            backups_to_restore.push(backup.clone());
+
             if backup.backup_type == BackupType::Full {
-                backups_to_restore.push(backup);
                 break;
             }
-            backups_to_restore.push(backup);
         }
     }
 
@@ -151,12 +158,22 @@ pub fn restore(app_name: &String, backup_name: &String) -> () {
 
         for backup in remote_backups {
             if backup.file_name == *backup_name {
-                // found = true;
+                found = true;
                 download_backup_from_remote(&backup);
                 backups_to_restore.push(backup);
                 break;
             }
         }
+    }
+
+    if !found {
+        error!("Couldn't find specified backup");
+        return;
+    }
+
+    println!("Found {} backups to restore", backups_to_restore.len());
+    for backup in &backups_to_restore {
+        println!("{}", backup.file_name);
     }
 
     backups_to_restore.reverse();

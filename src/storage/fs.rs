@@ -9,6 +9,8 @@ use chrono::{DateTime, Utc};
 
 use glob::glob;
 
+use crate::config::Config;
+
 pub fn read_file_to_string(path: &Path) -> String {
     let mut file = File::open(path).expect("Unable to open file");
     let mut contents = String::new();
@@ -37,11 +39,11 @@ pub fn delete_file(path: &PathBuf) -> Result<(), Error> {
     remove_file(path)
 }
 
-pub fn get_files_to_backup(
-    app_root: String,
-    included_paths: Vec<String>,
-    excluded_paths: Vec<String>,
-) -> Vec<PathBuf> {
+pub fn get_files_to_backup(config: &Config) -> Vec<PathBuf> {
+    let app_root = &config.app_root;
+    let included_paths = &config.included_paths;
+    let excluded_paths = &config.excluded_paths;
+
     let mut included_pathbufs: Vec<PathBuf> = Vec::new();
     let mut excluded_pathbufs: Vec<PathBuf> = Vec::new();
 
