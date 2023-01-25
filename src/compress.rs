@@ -42,12 +42,12 @@ pub fn compress_files(archive_path: &PathBuf, paths: &Vec<PathBuf>) {
     let gz_archive = get_backup_path_with_extension(archive_path, ".tar.gz");
 
     let tar_gz_file = File::create(gz_archive).unwrap();
-    let mut gz_writer = flate2::write::GzEncoder::new(tar_gz_file, flate2::Compression::default());
+    let mut gz_encoder = flate2::write::GzEncoder::new(tar_gz_file, flate2::Compression::default());
 
-    io::copy(&mut tar_file_reader, &mut gz_writer).unwrap();
+    io::copy(&mut tar_file_reader, &mut gz_encoder).unwrap();
 
-    gz_writer.try_finish().unwrap();
-    gz_writer.finish().unwrap();
+    gz_encoder.try_finish().unwrap();
+    gz_encoder.finish().unwrap();
 
     std::fs::remove_file(&tar_archive_path).unwrap();
 
@@ -55,12 +55,29 @@ pub fn compress_files(archive_path: &PathBuf, paths: &Vec<PathBuf>) {
 }
 
 pub fn decompress_archive(archive: PathBuf, app_root: PathBuf) {
-    let tar_file = File::open(archive).unwrap();
+    let mut tar_gz_file_reader = File::open(&archive).unwrap();
 
-    let mut tar_archive = Archive::new(tar_file);
+    let tar_file_path = archive.with_file_name("tmp.tar");
+    let tar_file_writer = match File::create(&tar_file_path) {
+        Ok(file) => file,
+        Err(e) => panic!("Error creating archive_path: {}", e),
+    };
+
+    let mut gz_decoder = flate2::write::GzDecoder::new(&tar_file_writer);
+
+    io::copy(&mut tar_gz_file_reader, &mut gz_decoder).unwrap();
+
+    gz_decoder.try_finish().unwrap();
+    gz_decoder.finish().unwrap();
+
+    let tar_file_reader = File::open(&tar_file_path).unwrap();
+
+    let mut tar_archive = Archive::new(tar_file_reader);
 
     match tar_archive.unpack(app_root) {
         Ok(_) => println!("Backup unpacked successfully"),
         Err(e) => println!("Error unpacking archive: {}", e),
     }
+
+    std::fs::remove_file(&tar_file_path).unwrap();
 }
